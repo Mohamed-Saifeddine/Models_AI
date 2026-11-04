@@ -223,9 +223,9 @@ Dernière ligne de `python -m pytest` avec `headers=HEADERS` :
 
 ## 8. Le rendu Git
 
-- Lien de la pull request : **[à compléter après création]**
+- Lien de la pull request : https://github.com/unknownxowker/Models_AI/pull/4
 - Le tag `tp2` existe sur GitHub : **à vérifier**
-- `git status` avant le commit : le fichier `.env` apparaissait-il ? **à vérifier** ; il ne doit pas être suivi par Git
+- `git status` avant le commit : le fichier `.env` apparaissait-il ? NON 
 - Qui a relu la pull request, et quel commentaire a-t-il laissé ? **[à compléter après relecture]**
 
 ## 9. Ce qui reste flou
