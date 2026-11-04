@@ -1,6 +1,6 @@
-# Étude de conception — [nom du projet]
+# Étude de conception — Prévision des repas servis à la cantine
 
-Groupe : Mohamed Saifeddine/Sara Hajdaoui/Marwa Khabarate/Ilyass Edhoum · Version : [brouillon / finale] · Date : [jj/mm/aaaa]
+Groupe : Mohamed Saifeddine / Sara Hajdaoui / Marwa Khabarate / Ilyass Edhoum · Sections 4–5 complétées ; autres sections à finaliser · Date : 28/10/2026
 
 ## 1. Contexte et utilisateurs
 - Utilisateur principal (un rôle précis) :
@@ -17,11 +17,12 @@ Groupe : Mohamed Saifeddine/Sara Hajdaoui/Marwa Khabarate/Ilyass Edhoum · Versi
 ## 4. Données
 | Jeu de données | Source et licence | Volume | Données personnelles ? |
 |---|---|---|---|
+| `data/cantine_repas.csv` | Fichier fourni/travaillé par le groupe pour le TP ; source d'origine et licence non précisées, à confirmer auprès du groupe. | 340 observations quotidiennes ; cible `repas_servis` et variables de calendrier, menu, inscriptions et météo. | Aucune donnée directement nominative dans les colonnes ; données agrégées par jour. |
 
 ## 5. Métriques, baseline et critères d'acceptation
-- Baseline et son score :
-- Métrique principale, et pourquoi :
-- Critères d'acceptation (métrique, nombre, jeu de données, condition) :
+- Baseline et son score : `DummyRegressor` prédisant la moyenne des repas du jeu d'entraînement ; MAE de 70,271 repas sur le jeu de test.
+- Métrique principale, et pourquoi : MAE (erreur absolue moyenne), exprimée en nombre de repas ; elle est directement interprétable pour planifier les quantités.
+- Critère proposé pour rendre la validation mesurable (la section était vide avant l'entraînement) : sur les 20 % de dates les plus récentes, obtenir une MAE au moins 15 % inférieure à celle de la baseline, soit une MAE ≤ 59,730 repas. Ce seuil est à faire valider par le groupe ; il a été formalisé après l'exécution et ne constitue donc pas une validation prospective.
 
 ## 6. Architecture prévue
 ## 7. Choix technologiques

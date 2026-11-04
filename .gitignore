@@ -1,4 +1,5 @@
 .venv/
 data/*.csv
+!data/cantine_repas.csv
 models/
 .env

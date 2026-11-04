@@ -1,88 +1,80 @@
 """Chargement et découpage des données.
 
-À vous d'écrire load_data() et split(). Les tests de tests/test_data.py disent ce qui est attendu.
+À vous d'écrire load_data() et split().
+Les tests de tests/test_data.py disent ce qui est attendu.
 """
-from os import path
 
 import pandas as pd
-from sklearn.model_selection import train_test_split  # noqa: F401  (utile pour split)
+from sklearn.model_selection import train_test_split
 
 from monprojet import config
 
 
 def load_data(path=None) -> pd.DataFrame:
-    """Lit le fichier CSV et renvoie un DataFrame.
+    """Charge les données depuis un fichier CSV."""
 
-    Attendu :
-    - lire config.DATA_PATH (ou `path` s'il est donné) ;
-    - si la colonne config.TARGET n'existe pas, lever une ValueError avec un message clair ;
-    - retirer les lignes où la cible est manquante.
+    if path is None:
+        path = config.DATA_PATH
 
-    Pistes : pd.read_csv, df.columns, df.dropna(subset=[...]).
-    """
-    csv_path = path if path is not None else config.DATA_PATH
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(path)
 
     if config.TARGET not in df.columns:
         raise ValueError(
             f"La colonne cible '{config.TARGET}' est absente du fichier CSV."
         )
 
-    return df.dropna(subset=[config.TARGET])
+    df = df.dropna(subset=[config.TARGET])
+
+    return df
+
 
 def feature_columns(df: pd.DataFrame) -> list:
-    """Les colonnes d'entrée : celles de config.FEATURES, ou toutes sauf la cible et la date. (Fournie.)"""
+    """Renvoie les colonnes d'entrée, sauf la cible et la date."""
+
     if config.FEATURES is not None:
         return list(config.FEATURES)
+
     excluded = {config.TARGET, config.TIME_COLUMN}
+
     return [c for c in df.columns if c not in excluded]
 
 
 def split(df: pd.DataFrame):
-    """Renvoie X_train, X_test, y_train, y_test."""
-    columns = feature_columns(df)
+    """Sépare les données en entraînement et test."""
+
+    X = df[feature_columns(df)]
+    y = df[config.TARGET]
 
     if config.SPLIT == "random":
-        X = df[columns]
-        y = df[config.TARGET]
 
         stratify = y if config.TASK == "classification" else None
 
-        return train_test_split(
+        X_train, X_test, y_train, y_test = train_test_split(
             X,
             y,
             test_size=config.TEST_SIZE,
             random_state=config.SEED,
-            stratify=stratify,
+            stratify=stratify
         )
 
-    if config.SPLIT == "chronologique":
-        if config.TIME_COLUMN is None:
-            raise ValueError(
-                "TIME_COLUMN doit être défini pour un découpage chronologique."
-            )
-
-        if config.TIME_COLUMN not in df.columns:
-            raise ValueError(
-                f"La colonne temporelle '{config.TIME_COLUMN}' est absente."
-            )
+    elif config.SPLIT == "chronologique":
 
         ordre = pd.to_datetime(df[config.TIME_COLUMN]).argsort()
-        df_trie = df.iloc[ordre]
 
-        nombre_test = max(1, round(len(df_trie) * config.TEST_SIZE))
-        limite = len(df_trie) - nombre_test
+        X = X.iloc[ordre]
+        y = y.iloc[ordre]
 
-        train = df_trie.iloc[:limite]
-        test = df_trie.iloc[limite:]
+        n_test = max(1, int(len(df) * config.TEST_SIZE))
 
-        X_train = train[columns]
-        X_test = test[columns]
-        y_train = train[config.TARGET]
-        y_test = test[config.TARGET]
+        X_train = X.iloc[:-n_test]
+        X_test = X.iloc[-n_test:]
 
-        return X_train, X_test, y_train, y_test
+        y_train = y.iloc[:-n_test]
+        y_test = y.iloc[-n_test:]
 
-    raise ValueError(
-        f"Type de découpage inconnu : {config.SPLIT}"
-    )
+    else:
+        raise ValueError(
+            f"Type de découpage inconnu : {config.SPLIT}"
+        )
+
+    return X_train, X_test, y_train, y_test
