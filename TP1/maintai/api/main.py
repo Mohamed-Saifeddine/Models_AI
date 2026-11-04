@@ -2,6 +2,7 @@
 
 Lancement : uvicorn maintai.api.main:app --reload
 """
+
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, HTTPException
@@ -42,8 +43,12 @@ def health() -> HealthOut:
 
 @router.post("/predict", response_model=PredictionOut)
 def predict(reading: SensorReading) -> PredictionOut:
-    # TODO (TP1) : Récupérez le predictor dans state ; s'il est absent, levez HTTPException 503 ; sinon renvoyez sa prédiction pour reading.model_dump()
-    raise NotImplementedError
+    predictor = state.get("predictor")
+    if predictor is None:
+        raise HTTPException(
+            status_code=503, detail="Modèle non chargé : lancez l'entraînement"
+        )
+    return PredictionOut(**predictor.predict(reading.model_dump()))
 
 
 app.include_router(router)
