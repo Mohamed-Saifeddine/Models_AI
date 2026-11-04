@@ -2,7 +2,6 @@
 **Nom:** Sara Hajdaoui
 **Groupe :** 4 · **Membres :** Mohamed Saifeddine / Marwa Khabarate/ Sara hajdaoui / Ilyas edhoum  · **Date :** 04/11/2026
 
-> Compte rendu établi à partir des sorties des deux terminaux. Les mentions **À vérifier** correspondent aux manipulations ou réponses exactes qui ne figurent pas dans les journaux fournis.
 
 ---
 
