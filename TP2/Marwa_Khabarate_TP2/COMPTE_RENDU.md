@@ -205,13 +205,13 @@ Dernière ligne de `python -m pytest` avec `headers=HEADERS` :
 
 ## 8. Le rendu Git
 
-- Lien de la pull request : à renseigner après publication de la branche `marwa/tp2`.
-- Le tag `tp2` existe sur GitHub : à vérifier après publication.
-- `git status` avant le commit : non vérifiable ici; `.env` est toutefois couvert par `.gitignore`.
+- Lien de la pull request : https://github.com/unknownxowker/Models_AI/pull/5
+- Le tag `tp2` existe sur GitHub : non, aucune référence `refs/tags/tp2` n'est publiée pour le moment.
+- `git status` avant le commit : non consigné sur le poste d'origine; `.env` est ignoré et ne figure pas parmi les 26 fichiers de la PR.
 - Relecteur et commentaire : à renseigner après la revue de la pull request.
 
 Vérification Ruff de la version actuelle : le lint ciblé des fichiers Python modifiés passe après formatage. `ruff check .` signale encore `UP017` dans `maintai/train.py` (code préexistant, hors périmètre de ce TP); le formatage global du projet n'a pas été appliqué pour éviter de modifier des fichiers sans rapport.
 
 ## 9. Ce qui reste flou
 
-Le contenu technique du TP est documenté et l'utilisateur confirme que l'interface fonctionne. Il reste à compléter les informations propres au groupe, à tester l'origine CORS sur le port 5501, puis à créer et faire relire la pull request et le tag `tp2` dans le dépôt Git du groupe.
+Le contenu technique du TP est documenté et l'utilisateur confirme que l'interface fonctionne. La PR personnelle est ouverte; il reste à tester l'origine CORS sur le port 5501, obtenir une relecture, puis publier le tag `tp2` après le merge.
