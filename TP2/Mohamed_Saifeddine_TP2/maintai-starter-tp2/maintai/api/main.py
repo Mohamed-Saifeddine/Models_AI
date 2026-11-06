@@ -4,8 +4,7 @@ Lancement : uvicorn maintai.api.main:app --reload
 """
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, FastAPI, HTTPException
-from fastapi import Depends
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from maintai import __version__
@@ -41,8 +40,7 @@ app.add_middleware(
     allow_headers=["Content-Type", "X-API-Key"],
 )
 
-# TODO (TP2) : Protégez toutes les routes /v1 : ajoutez require_api_key comme dépendance du router (dependencies=[Depends(...)])
-router = APIRouter(prefix="/v1")
+router = APIRouter(prefix="/v1", dependencies=[Depends(require_api_key)])
 
 
 @app.get("/health", response_model=HealthOut)

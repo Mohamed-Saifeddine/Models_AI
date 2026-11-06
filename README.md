@@ -37,3 +37,7 @@ Remplissez `docs/choix-modele.md` : les résultats sur le jeu de test, le modèl
 |---|---|
 | `models/model.joblib` | Le meilleur modèle selon la métrique principale |
 | `models/metrics.json` | `main_metric`, `best`, et les scores de tous les modèles |
+main.py router
+security.py 
+.env
+index.html post 
