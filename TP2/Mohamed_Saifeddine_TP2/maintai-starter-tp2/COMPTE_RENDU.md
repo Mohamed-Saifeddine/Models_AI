@@ -12,7 +12,7 @@
 | `POST /v1/predict` avec le champ supplémentaire `pression` | champ non autorisé | 422 | 422 |
 | `POST /v1/predict2` | route inexistante | 404 | 404 |
 
-Les prévisions de codes étaient correctes. Lors du premier essai du cas « texte au lieu d'un nombre », un JSON mal formé pouvait produire un message de décodage JSON. Le test final envoie bien un JSON valide contenant une chaîne, ce qui vérifie la validation de type et renvoie 422.
+Les codes prévus étaient corrects. Pour le cas du texte, j'ai remplacé la température par une chaîne et j'ai obtenu 422.
 
 Dernière ligne de `python -m pytest` dans le TP1 actuel :
 
@@ -22,7 +22,7 @@ Dernière ligne de `python -m pytest` dans le TP1 actuel :
 
 Le TP1 contient les cinq cas paramétrés ainsi qu'un test supplémentaire sur 500 °C, ce qui explique que son total actuel soit supérieur aux 18 tests annoncés dans le sujet.
 
-`@pytest.mark.parametrize` exécute la même fonction de test avec plusieurs jeux de paramètres. La liste contient cinq lignes : Pytest compte donc cinq tests distincts et indique le cas concerné dans son rapport.
+`@pytest.mark.parametrize` permet de tester plusieurs cas avec la même fonction. Ici, Pytest compte cinq tests.
 
 ## 2. Ruff
 
@@ -32,7 +32,7 @@ Sortie de `ruff check .` dans le TP1 :
 All checks passed!
 ```
 
-`ruff check .` effectue une analyse statique : imports inutiles, organisation des imports et règles de qualité ou de style. `python -m pytest` exécute le programme et vérifie son comportement avec des assertions. Un code peut donc être fonctionnel mais mal écrit, ou être bien formaté tout en produisant un résultat faux.
+Ruff vérifie la qualité et le style du code. Pytest exécute le code pour vérifier qu'il fonctionne correctement.
 
 ## 3. Mise en place du TP2
 
@@ -42,7 +42,7 @@ All checks passed!
 ============================= 2 failed, 16 passed =============================
 ```
 
-Les deux tests en échec sont `test_missing_key_is_rejected` et `test_wrong_key_is_rejected`. Ils attendent 401, mais reçoivent 200 parce que la fonction de sécurité n'est pas encore appelée par le routeur.
+Les deux tests en échec sont ceux de la clé absente et de la mauvaise clé. Ils reçoivent 200 au lieu de 401.
 
 ## 4. La clé API (sprint 1)
 
@@ -71,7 +71,7 @@ Ligne du routeur dans `maintai/api/main.py` :
 router = APIRouter(prefix="/v1", dependencies=[Depends(require_api_key)])
 ```
 
-Après avoir écrit uniquement `security.py`, deux tests échouent encore. La fonction existe, mais FastAPI ne l'exécute pas tant qu'elle n'est pas ajoutée comme dépendance du routeur `/v1`.
+Deux tests échouent encore, car la fonction de sécurité n'est pas encore utilisée par le routeur.
 
 Dernière ligne de Pytest à la fin du TP2, avec les cinq tests de l'activité 1 :
 
@@ -92,7 +92,7 @@ Résultats observés avec `uvicorn maintai.api.main:app --reload --env-file .env
 | `POST /v1/predict`, 500 °C, sans clé | 401 | `{"detail":"Clé API absente ou invalide"}` |
 | `POST /v1/predict`, 500 °C, bonne clé | 422 | erreur de validation : température inférieure ou égale à 150 attendue |
 
-500 °C sans clé donne 401, tandis que 500 °C avec la bonne clé donne 422. FastAPI exécute d'abord la dépendance de sécurité du routeur, puis valide le corps de la requête seulement si l'authentification réussit.
+Sans clé, l'API renvoie d'abord 401. Avec la bonne clé, elle vérifie la température et renvoie 422.
 
 Sans `--env-file .env`, une requête avec la clé renvoie :
 
@@ -101,7 +101,7 @@ Sans `--env-file .env`, une requête avec la clé renvoie :
 HTTP 500
 ```
 
-Ce n'est pas 401, car le problème ne vient pas du client : le serveur ne possède aucune clé de référence et ne peut pas authentifier les requêtes.
+J'obtiens 500 parce que la clé du serveur n'a pas été chargée.
 
 ## 5. La page web (sprint 2)
 
@@ -161,11 +161,11 @@ API injoignable ou requête bloquée par CORS : Failed to fetch
 
 La console indique que l'accès à `http://localhost:8000/v1/predict` depuis l'origine `http://localhost:5501` a été bloqué par la politique CORS, car aucun en-tête `Access-Control-Allow-Origin` valide n'est présent.
 
-`curl` reçoit quand même une réponse parce que CORS est une règle de sécurité appliquée par les navigateurs. `curl` n'applique pas cette politique.
+`curl` fonctionne parce que CORS concerne surtout les navigateurs.
 
 ## 6. Les tests de l'activité 1 dans le TP2
 
-Sans `headers=HEADERS`, quatre cas qui attendent 422 reçoivent 401 et échouent. Le cas « mauvaise route » passe quand même avec 404 : aucune route ne correspond à l'URL, donc FastAPI renvoie 404 sans exécuter la dépendance du routeur.
+Sans les headers, quatre tests reçoivent 401 et échouent. Le test de la mauvaise route passe quand même avec 404.
 
 Avec `HEADERS = {"X-API-Key": "test-key"}` :
 
@@ -175,11 +175,11 @@ Avec `HEADERS = {"X-API-Key": "test-key"}` :
 
 ## 7. Questions de compréhension
 
-1. **Différence entre 401, 422 et 403.** 401 indique que l'authentification est absente ou invalide. 422 indique que la requête a été comprise, mais que ses données ne respectent pas le schéma attendu. 403 indique que l'identité est connue mais qu'elle n'a pas l'autorisation d'effectuer l'action.
-2. **Stockage de la clé.** Une clé placée dans le code ou Git reste visible dans l'historique et doit être remplacée si elle fuit. `.env` contient la vraie clé locale et n'est pas commité. `.env.example` décrit les variables avec une fausse valeur et peut être commité.
-3. **En-tête plutôt qu'URL.** Les URL sont souvent enregistrées dans l'historique, les journaux des serveurs, les outils de suivi et certains intermédiaires. Un en-tête évite cette exposition et sépare l'authentification des données métier.
-4. **Rôle de `secrets.compare_digest`.** Il compare les valeurs avec une durée moins dépendante de la position du premier caractère différent, ce qui réduit les informations exploitables par une attaque temporelle.
-5. **Origine.** Une origine est la combinaison du protocole, du nom d'hôte et du port. `http://localhost:5500` et `http://localhost:8000` sont deux origines différentes, car leurs ports diffèrent.
+1. **401, 422 et 403 :** 401 concerne une clé absente ou fausse. 422 concerne des données invalides. 403 signifie que l'accès est interdit même si le client est identifié.
+2. **Clé et Git :** la clé ne doit pas être visible sur Git. La vraie clé est dans `.env`, qui est ignoré. `.env.example` contient seulement un exemple.
+3. **En-tête plutôt qu'URL :** cela évite que la clé apparaisse dans l'historique ou les logs de l'URL.
+4. **`secrets.compare_digest` :** il compare les clés de façon plus sûre que `==`.
+5. **Origine :** une origine contient le protocole, le domaine et le port. Les ports 5500 et 8000 donnent donc deux origines différentes.
 
 ## 8. Le rendu Git
 
@@ -190,4 +190,4 @@ Avec `HEADERS = {"X-API-Key": "test-key"}` :
 
 ## 9. Ce qui reste flou
 
-La partie technique est terminée. Il reste uniquement les informations externes qui ne peuvent être connues avant le rendu : numéro du groupe, lien de la pull request, nom du relecteur, commentaire de relecture et création du tag `tp2` après fusion.
+Pour le moment, tout est clair.
