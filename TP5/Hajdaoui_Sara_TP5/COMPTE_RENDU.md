@@ -148,11 +148,11 @@ Dans `docs/adr/004-choix-du-modele.md` : le modèle et le seuil retenus, à part
 ## 6. Questions de compréhension
 
 1. Quelle différence entre Git, DVC et MLflow ? Que versionne chacun ?
-   …
+   **Git** versionne le code (et les petits fichiers texte comme le compte rendu ou l'ADR), ainsi que les reçus `.dvc` des données. **DVC** versionne les fichiers de données eux-mêmes : il les garde hors de Git, dans son cache et dans un stockage, et ne laisse dans Git qu'un reçu (md5, taille, chemin). **MLflow** garde la trace de chaque entraînement (un run) : les paramètres (`model`, `C`, `threshold`, `n_train`), l'empreinte des données (`data_md5`), les métriques (recall, precision, accuracy) et le modèle avec les versions exactes de ses bibliothèques. Git et DVC répondent à « quelle version du code et des données ? », MLflow à « quel réglage a donné quel résultat ? ».
 2. Pourquoi le stockage DVC est-il ajouté avec `--local` dans ce TP ? Que faudrait-il pour que tout le groupe partage les mêmes données ?
-   …
+   Le stockage est un dossier de mon ordinateur (`~/dvc-stockage`) : ce chemin n'existe pas sur les postes des autres membres, il ne doit donc pas aller dans Git. Avec `--local`, il est écrit dans `.dvc/config.local`, qui est ignoré par Git. Pour partager les données, il faudrait un stockage accessible à tout le groupe (S3, Google Drive, un serveur SSH…), déclaré **sans** `--local` pour que la configuration soit dans `.dvc/config` et donc commitée. Chacun pourrait alors faire `git pull` puis `dvc pull` pour récupérer exactement les mêmes données.
 3. Livrer un modèle, c'est trois choses (TP4). Lesquelles, et où sont-elles maintenant ?
-   …
+   Le **code** (le package `maintai`) est dans Git, et dans le wheel construit au TP4. Les **données** d'entraînement sont sous DVC : le reçu `data/sensors.csv.dvc` est dans Git, le fichier lui-même est dans le stockage DVC. Le **modèle** est dans MLflow, sous forme d'un run identifié par son `run_id`, avec les **versions exactes** des bibliothèques dans son `requirements.txt`. Le `data_md5` du run fait le lien entre le modèle et ses données.
 
 ## 7. Le rendu Git
 
