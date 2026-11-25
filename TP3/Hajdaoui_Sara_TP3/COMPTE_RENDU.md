@@ -194,7 +194,7 @@ Avec l'API lancée (`uvicorn maintai.api.main:app --reload --env-file .env`) et 
 
 ## 6. Le rendu Git
 
-- Lien de la pull request : *voir la PR « TP3 : Hajdaoui Sara » sur Mohamed-Saifeddine/Models_AI*
+- Lien de la pull request : https://github.com/Mohamed-Saifeddine/Models_AI/pull/7
 - Le tag `tp3` existe sur GitHub : non (à créer après la fusion : `git tag tp3`, `git push --tags`)
 - `git status` avant le commit : `.env`, `data/` ou `models/` apparaissaient-ils ? **non** (exclus par `.gitignore`)
 
