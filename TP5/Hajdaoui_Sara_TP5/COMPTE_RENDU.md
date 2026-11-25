@@ -156,9 +156,9 @@ Dans `docs/adr/004-choix-du-modele.md` : le modèle et le seuil retenus, à part
 
 ## 7. Le rendu Git
 
-- Lien de la pull request : …
-- Le tag `tp5` existe sur GitHub : oui / non
-- `git status` avant le commit : `mlflow.db`, `mlruns/`, `data/sensors.csv` ou `.dvc/cache` apparaissaient-ils ? oui / non
+- Lien de la pull request : https://github.com/Mohamed-Saifeddine/Models_AI/pull/6
+- Le tag `tp5` existe sur GitHub : non (à poser après la relecture et la fusion de la pull request)
+- `git status` avant le commit : `mlflow.db`, `mlruns/`, `data/sensors.csv` ou `.dvc/cache` apparaissaient-ils ? non (ils sont exclus par le `.gitignore` de `TP5`, et `.dvc/config.local` par celui de `.dvc`)
 
 ## 8. Ce qui reste flou
 
