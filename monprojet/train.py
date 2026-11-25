@@ -1,17 +1,27 @@
+
 """Entraîne chaque modèle candidat, l'évalue sur le jeu de test et les compare.
 
 Usage, depuis la racine du projet : python -m monprojet.train
 """
+
 import json
 
 import joblib
 import numpy as np
 import pandas as pd
+
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import (accuracy_score, f1_score, mean_absolute_error, mean_squared_error,
-                             precision_score, r2_score, recall_score)
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    mean_absolute_error,
+    mean_squared_error,
+    precision_score,
+    r2_score,
+    recall_score
+)
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
@@ -19,121 +29,226 @@ from monprojet import config
 from monprojet.data import load_data, split
 from monprojet.models import candidates
 
-HIGHER_IS_BETTER = {"accuracy": True, "recall": True, "precision": True, "f1": True,
-                    "mae": False, "rmse": False, "r2": True}
+
+HIGHER_IS_BETTER = {
+    "accuracy": True,
+    "recall": True,
+    "precision": True,
+    "f1": True,
+    "mae": False,
+    "rmse": False,
+    "r2": True
+}
 
 
 def build_preprocessing(X: pd.DataFrame) -> ColumnTransformer:
-    """Prépare les colonnes : nombres mis à l'échelle, catégories encodées, texte vectorisé. (Fournie.)"""
+    """Prépare les colonnes : nombres, catégories et texte."""
+
     text = [config.TEXT_COLUMN] if config.TEXT_COLUMN else []
-    numeric = [c for c in X.columns if c not in text and pd.api.types.is_numeric_dtype(X[c])]
-    categorical = [c for c in X.columns if c not in text and c not in numeric]
+
+    numeric = [
+        c for c in X.columns
+        if c not in text and pd.api.types.is_numeric_dtype(X[c])
+    ]
+
+    categorical = [
+        c for c in X.columns
+        if c not in text and c not in numeric
+    ]
+
     steps = []
+
     if numeric:
-        steps.append(("nombres", make_pipeline(SimpleImputer(strategy="median"), StandardScaler()), numeric))
+        steps.append((
+            "nombres",
+            make_pipeline(
+                SimpleImputer(strategy="median"),
+                StandardScaler()
+            ),
+            numeric
+        ))
+
     if categorical:
-        steps.append(("categories", make_pipeline(SimpleImputer(strategy="most_frequent"),
-                                                  OneHotEncoder(handle_unknown="ignore")), categorical))
+        steps.append((
+            "categories",
+            make_pipeline(
+                SimpleImputer(strategy="most_frequent"),
+                OneHotEncoder(handle_unknown="ignore")
+            ),
+            categorical
+        ))
+
     if text:
-        steps.append(("texte", TfidfVectorizer(), config.TEXT_COLUMN))
+        steps.append((
+            "texte",
+            TfidfVectorizer(),
+            config.TEXT_COLUMN
+        ))
+
     return ColumnTransformer(steps, sparse_threshold=0)
 
 
 def evaluate(model, X_test, y_test) -> dict:
-    """Prédit sur le jeu de test et renvoie un dictionnaire {nom de la métrique: valeur}.
+    """Évalue le modèle sur le jeu de test."""
 
-    Attendu :
-    - classification : "accuracy", "recall", "precision", "f1"
-      (average="binary" s'il y a deux classes, "macro" sinon ; zero_division=0) ;
-    - régression : "mae", "rmse", "r2" ;
-    - des float, arrondis à 3 décimales.
-
-    Pistes : model.predict(X_test) ; les fonctions importées en haut du fichier ; np.sqrt.
-    """
-    predictions = model.predict(X_test)
+    y_pred = model.predict(X_test)
 
     if config.TASK == "classification":
-        average = "binary" if y_test.nunique() == 2 else "macro"
-        return {
-            "accuracy": round(float(accuracy_score(y_test, predictions)), 3),
-            "recall": round(float(recall_score(
-                y_test, predictions, average=average, zero_division=0
-            )), 3),
-            "precision": round(float(precision_score(
-                y_test, predictions, average=average, zero_division=0
-            )), 3),
-            "f1": round(float(f1_score(
-                y_test, predictions, average=average, zero_division=0
-            )), 3),
+
+        # Choisir la méthode selon le nombre de classes
+        average = "binary" if len(np.unique(y_test)) == 2 else "macro"
+
+        scores = {
+            "accuracy": float(round(
+                accuracy_score(y_test, y_pred), 3
+            )),
+
+            "recall": float(round(
+                recall_score(
+                    y_test,
+                    y_pred,
+                    average=average,
+                    zero_division=0
+                ), 3
+            )),
+
+            "precision": float(round(
+                precision_score(
+                    y_test,
+                    y_pred,
+                    average=average,
+                    zero_division=0
+                ), 3
+            )),
+
+            "f1": float(round(
+                f1_score(
+                    y_test,
+                    y_pred,
+                    average=average,
+                    zero_division=0
+                ), 3
+            ))
         }
 
-    if config.TASK == "regression":
-        mse = mean_squared_error(y_test, predictions)
-        return {
-            "mae": round(float(mean_absolute_error(y_test, predictions)), 3),
-            "rmse": round(float(np.sqrt(mse)), 3),
-            "r2": round(float(r2_score(y_test, predictions)), 3),
+    elif config.TASK == "regression":
+
+        scores = {
+            "mae": float(round(
+                mean_absolute_error(y_test, y_pred), 3
+            )),
+
+            "rmse": float(round(
+                np.sqrt(mean_squared_error(y_test, y_pred)), 3
+            )),
+
+            "r2": float(round(
+                r2_score(y_test, y_pred), 3
+            ))
         }
 
-    raise ValueError(f"Type de tâche inconnu : {config.TASK}")
+    else:
+        raise ValueError(
+            f"Type de tâche inconnu : {config.TASK}"
+        )
+
+    return scores
 
 
 def main() -> None:
-    """Entraîne chaque candidat, l'évalue, compare, et sauvegarde.
+    """Entraîne, évalue, compare et sauvegarde les modèles."""
 
-    Plan :
-    1. charger les données (load_data) et les découper (split) ;
-    2. pour chaque (nom, estimateur) de candidates() :
-       model = Pipeline([("preparation", build_preprocessing(X_train)), ("modele", estimateur)]),
-       l'entraîner sur X_train, y_train, puis l'évaluer avec evaluate() ;
-    3. afficher un tableau de comparaison (pd.DataFrame(resultats).T), trié selon config.MAIN_METRIC ;
-    4. trouver le meilleur modèle selon config.MAIN_METRIC (HIGHER_IS_BETTER dit dans quel sens) ;
-    5. créer config.MODELS_DIR, y sauvegarder le meilleur modèle (joblib.dump) dans model.joblib,
-       et écrire metrics.json : {"main_metric": ..., "best": nom du meilleur, "results": {nom: scores}}.
-    """
+    # 1. Charger et découper les données
     df = load_data()
+
     X_train, X_test, y_train, y_test = split(df)
 
+    print("Données chargées avec succès.")
+    print(f"Entraînement : {len(X_train)} lignes")
+    print(f"Test : {len(X_test)} lignes")
+
+    # 2. Entraîner et évaluer chaque modèle
     resultats = {}
     modeles_entraines = {}
 
     for nom, estimateur in candidates().items():
+
+        print(f"\nEntraînement du modèle : {nom}")
+
         model = Pipeline([
             ("preparation", build_preprocessing(X_train)),
-            ("modele", estimateur),
+            ("modele", estimateur)
         ])
+
         model.fit(X_train, y_train)
-        resultats[nom] = evaluate(model, X_test, y_test)
+
+        scores = evaluate(model, X_test, y_test)
+
+        resultats[nom] = scores
         modeles_entraines[nom] = model
 
-    if config.MAIN_METRIC not in HIGHER_IS_BETTER:
-        raise ValueError(f"Métrique principale inconnue : {config.MAIN_METRIC}")
+    # 3. Afficher le tableau comparatif
+    tableau = pd.DataFrame(resultats).T
 
-    higher_is_better = HIGHER_IS_BETTER[config.MAIN_METRIC]
-    tableau = pd.DataFrame(resultats).T.sort_values(
-        by=config.MAIN_METRIC,
-        ascending=not higher_is_better,
+    metrique = config.MAIN_METRIC
+
+    if metrique not in HIGHER_IS_BETTER:
+        raise ValueError(f"Métrique inconnue : {metrique}")
+
+    ordre_decroissant = HIGHER_IS_BETTER[metrique]
+
+    tableau = tableau.sort_values(
+        by=metrique,
+        ascending=not ordre_decroissant
     )
-    print(tableau)
 
-    selection = max if higher_is_better else min
-    meilleur_nom = selection(
-        resultats,
-        key=lambda nom: resultats[nom][config.MAIN_METRIC],
+    print("\n===== COMPARAISON DES MODÈLES =====")
+    print(tableau.to_string())
+
+    # 4. Sélectionner le meilleur modèle
+    if ordre_decroissant:
+        meilleur_nom = tableau[metrique].idxmax()
+    else:
+        meilleur_nom = tableau[metrique].idxmin()
+
+    meilleur_modele = modeles_entraines[meilleur_nom]
+
+    print(f"\nMeilleur modèle : {meilleur_nom}")
+    print(f"Meilleur score ({metrique}) : "
+          f"{resultats[meilleur_nom][metrique]}")
+
+    # 5. Sauvegarder le modèle et les métriques
+    config.MODELS_DIR.mkdir(
+        parents=True,
+        exist_ok=True
     )
 
-    config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    joblib.dump(modeles_entraines[meilleur_nom], config.MODELS_DIR / "model.joblib")
+    chemin_modele = config.MODELS_DIR / "model.joblib"
 
-    rapport = {
-        "main_metric": config.MAIN_METRIC,
+    joblib.dump(
+        meilleur_modele,
+        chemin_modele
+    )
+
+    contenu_metrics = {
+        "main_metric": metrique,
         "best": meilleur_nom,
-        "results": resultats,
+        "results": resultats
     }
-    (config.MODELS_DIR / "metrics.json").write_text(
-        json.dumps(rapport, ensure_ascii=False, indent=2),
-        encoding="utf-8",
+
+    chemin_metrics = config.MODELS_DIR / "metrics.json"
+
+    chemin_metrics.write_text(
+        json.dumps(
+            contenu_metrics,
+            indent=4,
+            ensure_ascii=False
+        ),
+        encoding="utf-8"
     )
+
+    print("\nModèle sauvegardé :", chemin_modele)
+    print("Métriques sauvegardées :", chemin_metrics)
 
 
 if __name__ == "__main__":
